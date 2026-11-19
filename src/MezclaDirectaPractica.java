@@ -1,0 +1,104 @@
+// ============================================================================
+// LIBRERIAS NATIVAS DE JAVA (Ya vienen incluidas, no hay que crearlas)
+// ============================================================================
+import java.io.BufferedReader;   // Sirve para leer archivos de texto linea por linea rapido
+import java.io.FileReader;      // Abre la conexion de lectura hacia un archivo en el disco
+import java.io.FileWriter;      // Abre la conexion de escritura hacia un archivo en el disco
+import java.io.PrintWriter;     // Nos deja escribir texto con .println() directo en el archivo
+import java.io.IOException;     // Atrapa errores si el archivo no existe o falla el disco
+
+public class MezclaDirectaPractica {
+
+    /**
+     * Este metodo agarra dos archivos auxiliares (F1 y F2) que ya traen bloques
+     * ordenados de tamano L, los va comparando frente a frente y los guarda
+     * ya mezclados y ordenados en un archivo de salida.
+     */
+    public static void intercalarBloques(String archivoF1, String archivoF2,
+                                         String archivoSalida, int L) {
+
+        // El "try-with-resources" abre los 3 archivos y los cierra solito al terminar
+        try (
+            BufferedReader lector1 = new BufferedReader(new FileReader(archivoF1));
+            BufferedReader lector2 = new BufferedReader(new FileReader(archivoF2));
+            PrintWriter escritor = new PrintWriter(new FileWriter(archivoSalida))
+        ) {
+            // Leemos el primer numero de cada archivo (el frente de cada fila)
+            String linea1 = lector1.readLine();
+            String linea2 = lector2.readLine();
+
+            // Contadores para llevar la cuenta de cuantos numeros hemos sacado del bloque L actual
+            int elementosEscritos1 = 0;
+            int elementosEscritos2 = 0;
+
+            // Mientras ninguno de los dos archivos se haya quedado vacio...
+            while (linea1 != null && linea2 != null) {
+
+                // Ajuste: cuando los dos bloques de tamano L ya se terminaron,
+                // se reinician los contadores para empezar el siguiente par de bloques.
+                if (elementosEscritos1 == L && elementosEscritos2 == L) {
+                    elementosEscritos1 = 0;
+                    elementosEscritos2 = 0;
+                }
+
+                // CASO 1: Todavia quedan elementos por comparar en AMBOS bloques de tamano L
+                if (elementosEscritos1 < L && elementosEscritos2 < L) {
+
+                    // Convertimos el texto leido del archivo a numero entero para poder compararlo
+                    int val1 = Integer.parseInt(linea1);
+                    int val2 = Integer.parseInt(linea2);
+
+                    //Escribe la condicion para saber si el numero de F1 es menor o igual al de F2
+                    if (val1 <= val2) {
+                        escritor.println(val1);              // Guardamos el de F1 en la salida
+                        linea1 = lector1.readLine();         // Avanzamos al siguiente numero de F1
+                        elementosEscritos1++;                // Aumentamos el contador del bloque 1
+                    } else {
+                        //Si el menor fue el de F2, haz exactamente lo mismo pero con F2
+                        escritor.println(val2);              // Guardamos el de F2 en la salida
+                        linea2 = lector2.readLine();         // Avanzamos al siguiente numero de F2
+                        elementosEscritos2++;                // Aumentamos el contador del bloque 2
+                    }
+                }
+                // CASO 2: El bloque de F2 ya se acabo (llego a L), asi que vaciamos lo que sobro de F1
+                else if (elementosEscritos1 < L) {
+                    escritor.println(linea1);
+                    linea1 = lector1.readLine();
+                    elementosEscritos1++;
+                }
+                // CASO 3: El bloque de F1 ya se acabo primero, asi que vaciamos lo que sobro de F2
+                else {
+                    //Escribe las 3 lineas para vaciar el elemento restante de F2
+                    escritor.println(linea2);
+                    linea2 = lector2.readLine();
+                    elementosEscritos2++;
+                }
+            }
+
+            // Ajuste: el while de arriba se detiene cuando un archivo se acaba,
+            // asi que aqui se vacia lo que quedo en el otro archivo. Sin esto,
+            // con f1.txt = 45 y f2.txt = 12, el 45 se perderia y f3.txt
+            // quedaria solo con el 12.
+            while (linea1 != null) {
+                escritor.println(linea1);
+                linea1 = lector1.readLine();
+            }
+            while (linea2 != null) {
+                escritor.println(linea2);
+                linea2 = lector2.readLine();
+            }
+
+            System.out.println("Bloque intercalado con exito!");
+
+        } catch (IOException e) {
+            // Si no creaste f1.txt o f2.txt antes de correr el programa, caera aqui
+            System.out.println("Error en E/S de archivos: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        // Para probarlo: crea manualmente "f1.txt" y "f2.txt" en la carpeta de tu proyecto
+        // con un numero por renglon, y corre el programa para ver como genera "f3.txt".
+        intercalarBloques("f1.txt", "f2.txt", "f3.txt", 1);
+    }
+}
